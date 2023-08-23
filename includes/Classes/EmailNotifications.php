@@ -139,6 +139,10 @@ class EmailNotifications
                         if ($notification['uploader_type'] == 'client') {
                             // Add the file to the account's creator email
                             $notifications['to_admins'][$client['created_by']][$client['name']][] = $notification_data;
+
+                            //STEVE Note - below allows the clients to be informed when their uploads have finished
+                            $notifications['to_clients'][$client['username']][] = $notification_data;
+
                         }
                         elseif ($notification['uploader_type'] == 'user') {
                             if ($client['notify_upload'] == '1') {
