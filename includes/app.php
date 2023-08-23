@@ -40,9 +40,9 @@ if ( !file_exists(CONFIG_FILE) ) {
  * on the footer blocks.
  *
  */
-define('SYSTEM_NAME','ProjectSend');
-define('SYSTEM_URI','https://www.projectsend.org/');
-define('SYSTEM_URI_LABEL','ProjectSend on github');
+define('SYSTEM_NAME','i2i Upload');
+define('SYSTEM_URI','https://www.i2ic.com/');
+define('SYSTEM_URI_LABEL','i2i Upload');
 define('DONATIONS_URL','https://www.projectsend.org/donations/');
 define('PATREON_URL','https://www.patreon.com/ignacionelson');
 define('OPENCOLLECTIVE_URL', 'https://opencollective.com/projectsend');
