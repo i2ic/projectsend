@@ -141,7 +141,7 @@ class EmailNotifications
                             $notifications['to_admins'][$client['created_by']][$client['name']][] = $notification_data;
 
                             //STEVE Note - below allows the clients to be informed when their uploads have finished
-                     //       $notifications['to_clients'][$client['username']][] = $notification_data;
+                            $notifications['to_clients'][$client['username']][] = $notification_data;
 
                         }
                         elseif ($notification['uploader_type'] == 'user') {
