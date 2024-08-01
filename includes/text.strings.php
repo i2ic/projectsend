@@ -86,7 +86,7 @@ $json_strings = [
         'no_email' => __('E-mail was not completed','cftp_admin'),
         'no_title' => __('Title was not completed','cftp_admin'),
         'invalid_email' => __('E-mail address is not valid','cftp_admin'),
-        'alpha_user' => __('Username must be alphanumeric and may contain dot or underscores (a-z, A-Z, 0-9, _ and . allowed)','cftp_admin'),
+        'alpha_user' => __('Username must be alphanumeric and may contain dot (a-z,A-Z,0-9 and . allowed)','cftp_admin'),
         'alpha_pass' => __('Password must be alphanumeric (a-z,A-Z,0-9 allowed)','cftp_admin'),
         'match_pass' => __('Passwords do not match','cftp_admin'),
         'rules_pass' => __('Password does not meet the required characters rules','cftp_admin'),
@@ -98,7 +98,6 @@ $json_strings = [
         'valid_chars' => ('` ! " ? $ ? % ^ & * ( ) _ - + = { [ } ] : ; @ ~ # | < , > . ? \' / \ '),
         'complete_all_options' => __('Please complete all the fields.','cftp_admin'),
         'enum_invalid' => __('Type is not valid','cftp_admin'),
-        'numeric' => __('Value %s is not a number','cftp_admin'),
         
         // Validation strings for the length of usernames and passwords
         'length_user' => sprintf(__('Length should be between %d and %d characters long', 'cftp_admin'), MIN_USER_CHARS, MAX_USER_CHARS),

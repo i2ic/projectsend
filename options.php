@@ -4,7 +4,6 @@
  */
 $allowed_levels = array(9);
 require_once 'bootstrap.php';
-log_in_required($allowed_levels);
 
 $section = (!empty($_GET['section'])) ? $_GET['section'] : $_POST['section'];
 
@@ -17,11 +16,8 @@ switch ($section) {
             'xsendfile_enable',
             'footer_custom_enable',
             'files_default_expire',
-            'files_default_public',
-            'uploads_organize_folders_by_date',
             'files_descriptions_use_ckeditor',
             'use_browser_lang',
-            'download_logging_ignore_file_author',
         );
         break;
     case 'clients':
@@ -33,8 +29,6 @@ switch ($section) {
             'clients_can_delete_own_files',
             'clients_can_set_expiration_date',
             'clients_new_default_can_set_public',
-            'clients_files_list_include_public',
-            'clients_can_upload_to_public_folders',
         );
         break;
     case 'privacy':
@@ -123,7 +117,6 @@ if ($_POST) {
     /** Values that can be empty */
     $allowed_empty_values = [
         'footer_custom_content',
-        'custom_download_uri',
         'mail_copy_addresses',
         'mail_smtp_host',
         'mail_smtp_port',
@@ -231,7 +224,7 @@ if ($_POST) {
 
     // Record the action log
     $logger = new \ProjectSend\Classes\ActionsLog;
-    $logger->addEntry([
+    $new_record_action = $logger->addEntry([
         'action' => 47,
         'owner_id' => CURRENT_USER_ID,
         'owner_user' => CURRENT_USER_USERNAME,
@@ -251,17 +244,6 @@ if ($section == 'security') {
         $flash->warning(__('Warning: php extension is allowed. This is a serious security problem. If you are not sure that you need it, please remove it from the list.', 'cftp_admin'));
     }
 }
-
-// Test folders
-if ($section == 'general' && get_option('uploads_organize_folders_by_date') == '1') {
-    $test_folder = UPLOADED_FILES_DIR.DS.'temp_folder_'.rand(10000,99999);
-    if (@mkdir($test_folder, 0775)) {
-        @rmdir($test_folder);
-    } else {
-        $flash->error("Warning: could not create a test folder in the uploads directory. Please try setting it's permissions to 775 and reload this page. If the issue persists, please disable the option to organize uploads in date based folders.");
-    }
-}
-
 
 include_once ADMIN_VIEWS_DIR . DS . 'header.php';
 ?>

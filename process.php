@@ -6,7 +6,6 @@ use ProjectSend\Classes\ActionsLog;
 /** Process an action */
 $allowed_levels = array(9, 8, 7, 0);
 require_once 'bootstrap.php';
-log_in_required($allowed_levels);
 
 global $auth;
 global $logger;
@@ -68,16 +67,19 @@ switch ($_GET['do']) {
         ps_redirect(BASE_URI.'dashboard.php');
     case 'return_files_ids':
         redirect_if_not_logged_in();
-        redirect_if_role_not_allowed($allowed_levels);
+        redirect_if_role_not_allowed($allowed_levels);    
         $download = new Download;
         $download->returnFilesIds($_GET['files']);
         break;
     case 'download_zip':
         redirect_if_not_logged_in();
-        redirect_if_role_not_allowed($allowed_levels);
+        redirect_if_role_not_allowed($allowed_levels);    
         $download = new Download;
         $download->downloadZip($_GET['files']);
-    break;
+        break;
+    default:
+        ps_redirect(BASE_URI);
+        break;
 }
 
 exit;

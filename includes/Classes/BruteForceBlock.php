@@ -153,10 +153,8 @@ class BruteForceBlock {
 			$stmt = $this->dbh->query('SELECT MAX(attempted_at) AS attempted_at FROM '.TABLE_LOGINS_FAILED.'');
 			$latest_failed_logins = $stmt->rowCount();
 			$row = $stmt-> fetch();
-            if (!empty($row['attempted_at'])) {
-                //get latest attempt's timestamp
-                $latest_failed_attempt_datetime = (int) date('U', strtotime($row['attempted_at']));
-            }
+			//get latest attempt's timestamp
+			$latest_failed_attempt_datetime = (int) date('U', strtotime($row['attempted_at']));
 		} catch(\PDOException $ex){
 			//return error
 			$response_array['status'] = 'error';

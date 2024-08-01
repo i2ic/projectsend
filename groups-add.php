@@ -4,7 +4,6 @@
  */
 $allowed_levels = array(9, 8);
 require_once 'bootstrap.php';
-log_in_required($allowed_levels);
 
 $active_nav = 'groups';
 

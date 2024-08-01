@@ -4,7 +4,8 @@
  */
 $allowed_levels = array(9);
 require_once '../bootstrap.php';
-log_in_required($allowed_levels);
+
+redirect_if_role_not_allowed($allowed_levels);
 
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename=cron-log.csv');

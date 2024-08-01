@@ -8,6 +8,12 @@
  */
 if (!defined('VIEW_TYPE')) define('VIEW_TYPE', 'private');
 
+// Check for an active session
+redirect_if_not_logged_in();
+
+// Check if the current user has permission to view this page.
+redirect_if_role_not_allowed($allowed_levels);
+
 global $flash;
 
 /** If no page title is defined, revert to a default one */
@@ -90,11 +96,7 @@ password_change_required();
                                 foreach ($header_action_buttons as $header_button) {
                                     $icon = (!empty($header_button['icon'])) ? $header_button['icon'] : 'fa fa-plus';
                         ?>
-                                    <a href="<?php echo $header_button['url']; ?>" class="btn btn-sm btn-primary" <?php if (!empty($header_button['id'])) { echo 'id="'.$header_button['id'].'"'; } ?>
-                                    <?php if (!empty($header_button['data-attributes'])) { foreach($header_button['data-attributes'] as $data_key => $data_value) { ?>
-                                        data-<?php echo $data_key; ?>="<?php echo $data_value; ?>" 
-                                    <?php } } ?>
-                                    >
+                                    <a href="<?php echo $header_button['url']; ?>" class="btn btn-sm btn-primary" <?php if (!empty($header_button['id'])) { echo 'id="'.$header_button['id'].'"'; } ?>>
                                         <i class="<?php echo $icon; ?> fa-small"></i> <?php echo $header_button['label']; ?>
                                     </a>
                         <?php

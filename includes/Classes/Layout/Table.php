@@ -12,10 +12,6 @@ class Table
         $this->contents = $this->open($attributes);
 
         $this->current_row = 1;
-
-        if (isset($attributes['origin'])) {
-            $this->origin = $attributes['origin'];
-        }
     }
 
     /**
@@ -69,9 +65,7 @@ class Table
         }
         $query = http_build_query($params);
 
-        $url = (!empty($this->origin)) ? BASE_URI . $this->origin : BASE_URI;
-
-        $build_url = $url.'?'.$query;
+        $build_url = BASE_URI . implode('/',$url_parts) . '?' . $query;
 
         $sortable_link = '<a href="' . $build_url . '">';
         $sortable_link .= $content;
@@ -177,29 +171,14 @@ class Table
         $this->contents .= $this->output;
     }
 
-    public function addRow($attributes = [])
+    public function addRow()
     {
         if ($this->current_row == 1) {
             $this->contents .= "<tbody>\n";
         }
 
         $this->row_class = ($this->current_row % 2) ? 'table_row' : 'table_row_alt';
-        $this->contents .= '<tr class="' . $this->row_class;
-        if (!empty($attributes['class'])) {
-            $this->contents .= ' ' . $attributes['class'] . ' ';
-        }
-        $this->contents .= '"';
-        if (!empty($attributes['attributes'])) {
-            foreach ($attributes['attributes'] as $attribute => $value) {
-                $this->contents .= $attribute.'="'.$value.'"';
-            }
-        }
-        if (!empty($attributes['data-attributes'])) {
-            foreach ($attributes['data-attributes'] as $attribute => $value) {
-                $this->contents .= 'data-'.$attribute.'="'.$value.'"';
-            }
-        }
-        $this->contents .= '>' . "\n";
+        $this->contents .= '<tr class="' . $this->row_class . '">' . "\n";
         $this->current_row++;
     }
 

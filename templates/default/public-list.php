@@ -76,7 +76,6 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                 $table = new \ProjectSend\Classes\Layout\Table([
                     'id' => 'files_list',
                     'class' => 'footable table',
-                    'origin' => basename(__FILE__),
                 ]);
 
                 $thead_columns = array(
@@ -109,7 +108,7 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                         'content' => __('Date', 'cftp_admin'),
                     ),
                     array(
-                        'content' => __('Expiry', 'cftp_admin'),
+                        'content' => __('Expiration date', 'cftp_admin'),
                         'hide' => 'phone',
                     ),
                     array(

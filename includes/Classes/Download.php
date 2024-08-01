@@ -139,8 +139,7 @@ class Download
      */
     private function downloadFile($filename, $save_as, $file_id)
     {
-        $file = new \ProjectSend\Classes\Files($file_id);
-        $file_location = $file->full_path;
+        $file_location = UPLOADED_FILES_DIR . DS . $filename;
 
         switch (CURRENT_USER_LEVEL) {
             case 0:
@@ -167,6 +166,7 @@ class Download
             
             $save_file_as = UPLOADED_FILES_DIR . DS . $save_as;
 
+            $file = new \ProjectSend\Classes\Files($file_id);
             $alias=$this->getAlias($file);
             $this->serveFile($file_location, $save_file_as, $alias);
             exit;

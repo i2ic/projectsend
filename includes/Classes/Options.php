@@ -108,9 +108,6 @@ class Options
         define('ASSETS_JS_URL', ASSETS_URL . '/js');
         define('ASSETS_LIB_URL', ASSETS_URL . '/lib');
 
-        // Ajax
-        define('AJAX_PROCESS_URL', BASE_URI. 'includes/ajax.process.php');
-
         // Client's landing URI
         define('CLIENT_VIEW_FILE_LIST_URL_PATH', 'my_files/index.php');
         define('CLIENT_VIEW_FILE_LIST_URL', BASE_URI . CLIENT_VIEW_FILE_LIST_URL_PATH);

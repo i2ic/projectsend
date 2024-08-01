@@ -89,7 +89,6 @@ if ($downloads['total'] > 0) {
             $table = new \ProjectSend\Classes\Layout\Table([
                 'id' => 'download_info_tbl',
                 'class' => 'footable table',
-                'origin' => basename(__FILE__),
             ]);
 
             $thead_columns = array(

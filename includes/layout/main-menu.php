@@ -41,10 +41,6 @@ if (current_role_in(array(9, 8, 7))) {
                 'link' => 'manage-files.php',
             ),
             array(
-                'label' => __('Manage downloads', 'cftp_admin'),
-                'link' => 'manage-downloads.php',
-            ),
-            array(
                 'label' => __('Find orphan files', 'cftp_admin'),
                 'link' => 'import-orphans.php',
             ),
@@ -283,8 +279,9 @@ if (current_role_in(array(9, 8, 7))) {
         ),
     );
 }
-
-// Items for clients
+/**
+ * Items for clients
+ */
 else {
     if (get_option('clients_can_upload') == 1) {
         $items['upload'] = array(
@@ -319,7 +316,9 @@ else {
     );
 }
 
-// Build the menu
+/**
+ * Build the menu
+ */
 $current_filename = parse_url(basename($_SERVER['REQUEST_URI']));
 $menu_output = "
     <div class='main_side_menu'>
@@ -357,12 +356,9 @@ foreach ($items as $item) {
                     $sub_active = ($subitem['link'] == $current_filename['path']) ? 'current_page' : '';
 
                     if (isset($_GET['section'])) {
-                        $parse = parse_url($subitem['link'], PHP_URL_QUERY);
-                        if (!empty($parse)) {
-                            parse_str($parse, $subitem_query);
-                            if (isset($subitem_query['section'])) {
-                                if ($subitem_query['section'] == $_GET['section']) { $sub_active = 'current_page'; }
-                            }
+                        parse_str(parse_url($subitem['link'], PHP_URL_QUERY), $subitem_query);
+                        if (isset($subitem_query['section'])) {
+                            if ($subitem_query['section'] == $_GET['section']) { $sub_active = 'current_page'; }
                         }
                     }
 

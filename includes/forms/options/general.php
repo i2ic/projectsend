@@ -79,17 +79,6 @@
 
 <div class="options_divide"></div>
 
-<h3><?php _e('Uploads','cftp_admin'); ?></h3>
-
-<div class="form-group row">
-    <div class="col-sm-8 offset-sm-4">
-        <label for="uploads_organize_folders_by_date">
-            <input type="checkbox" value="1" name="uploads_organize_folders_by_date" id="uploads_organize_folders_by_date" class="checkbox_options" <?php echo (get_option('uploads_organize_folders_by_date') == 1) ? 'checked="checked"' : ''; ?> /> <?php _e("Organize uploads in folders based on year and month",'cftp_admin'); ?>
-            <p class="field_note form-text"><?php _e("For new uploads only. Will not affect existing files.",'cftp_admin'); ?></p>
-        </label>
-    </div>
-</div>
-
 <h3><?php _e('Uploads defaults','cftp_admin'); ?></h3>
 
 <div class="form-group row">
@@ -99,17 +88,6 @@
         </label>
         <p class="field_note form-text">
             <?php _e('Users can always set an expiration date for files. This option just makes the checkbox marked by default in the editor.', 'cftp_admin'); ?>
-            <?php _e('For clients not allowed to set it, this setting will be directly applied to the file.', 'cftp_admin'); ?>
-        </p>
-    </div>
-</div>
-<div class="form-group row">
-    <div class="col-sm-8 offset-sm-4">
-        <label for="files_default_public">
-            <input type="checkbox" value="1" name="files_default_public" id="files_default_public" class="checkbox_options" <?php echo (get_option('files_default_public') == 1) ? 'checked="checked"' : ''; ?> /> <?php _e("Files are public by default",'cftp_admin'); ?>
-        </label>
-        <p class="field_note form-text">
-            <?php _e('Users can always set a download to be public. This option just makes the checkbox marked by default in the editor.', 'cftp_admin'); ?>
             <?php _e('For clients not allowed to set it, this setting will be directly applied to the file.', 'cftp_admin'); ?>
         </p>
     </div>
@@ -163,16 +141,6 @@
     </div>
 </div>
 
-
-<div class="form-group row">
-    <div class="col-sm-8 offset-sm-4">
-        <label for="download_logging_ignore_file_author">
-            <input type="checkbox" value="1" name="download_logging_ignore_file_author" id="download_logging_ignore_file_author" class="checkbox_options" <?php echo (get_option('download_logging_ignore_file_author') == 1) ? 'checked="checked"' : ''; ?> /> <?php _e("Do not log downloads by the file's uploader",'cftp_admin'); ?>
-            <p class="field_note form-text"><?php _e("When a user or client downloads their own files, do not log the download or add to the downloads count.",'cftp_admin'); ?></p>
-        </label>
-    </div>
-</div>
-
 <div class="options_divide"></div>
 
 <h3><?php _e('System location','cftp_admin'); ?></h3>
@@ -182,14 +150,5 @@
     <label for="base_uri" class="col-sm-4 control-label"><?php _e('System URI','cftp_admin'); ?></label>
     <div class="col-sm-8">
         <input type="text" class="form-control" name="base_uri" id="base_uri" value="<?php echo BASE_URI; ?>" required />
-    </div>
-</div>
-
-<h3><?php _e('Custom download URI','cftp_admin'); ?></h3>
-
-<div class="form-group row">
-    <label for="custom_download_uri" class="col-sm-4 control-label"><?php _e('Custom download URI','cftp_admin'); ?></label>
-    <div class="col-sm-8">
-        <input type="text" class="form-control" name="custom_download_uri" id="custom_download_uri" value="<?php echo get_option('custom_download_uri'); ?>" />
     </div>
 </div>

@@ -1,4 +1,4 @@
-                    <?php render_footer_text(); ?>
+                    <?php render_footer_text();  ?> 
                 </div> <!-- main-content -->
             </div> <!-- container-fluid -->
         </main>
@@ -8,7 +8,7 @@
             render_assets('js', 'footer');
             render_assets('css', 'footer');
 
-            render_custom_assets('body_bottom');
+	    render_custom_assets('body_bottom');
         ?>
     </body>
 </html>
