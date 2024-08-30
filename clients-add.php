@@ -4,6 +4,7 @@
  */
 $allowed_levels = array(9, 8);
 require_once 'bootstrap.php';
+log_in_required($allowed_levels);
 
 $active_nav = 'clients';
 
@@ -75,7 +76,7 @@ if ($_POST) {
         $flash->success(__('Client created successfully'));
         $redirect_to = BASE_URI . 'clients-edit.php?id=' . $create['id'];
     } else {
-        $flash->error(__('There was an error saving to the database'));
+        $flash->error($new_client->getValidationErrors());
         $redirect_to = BASE_URI . 'clients-add.php';
     }
 
@@ -103,8 +104,6 @@ if ($_POST) {
             <div class="white-box-interior">
                 <?php
                 // If the form was submitted with errors, show them here.
-                echo $new_client->getValidationErrors();
-
                 $clients_form_type = 'new_client';
                 include_once FORMS_DIR . DS . 'clients.php';
                 ?>

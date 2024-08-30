@@ -9,6 +9,7 @@
  */
 $allowed_levels = array(9, 8, 7);
 require_once 'bootstrap.php';
+log_in_required($allowed_levels);
 
 $active_nav = 'files';
 $this_page = 'import-orphans.php';
@@ -186,6 +187,7 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                     'id' => 'import_orphans_table',
                     'class' => 'footable table',
                     'data-page-size' => FOOTABLE_PAGING_NUMBER,
+                    'origin' => basename(__FILE__),
                 ]);
 
                 $thead_columns = array(

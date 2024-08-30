@@ -1,4 +1,4 @@
-<form action="files-edit.php?ids=<?php echo html_output($_GET['ids']); ?>" name="files" id="files" method="post" enctype="multipart/form-data">
+<form action="files-edit.php?ids=<?php echo html_output($_GET['ids']); ?><?php if (isset($_GET['confirm'])) { echo "&confirmed=true"; } ?>" name="files" id="files" method="post" enctype="multipart/form-data">
     <?php addCsrf(); ?>
 
     <div class="container-fluid">
@@ -90,6 +90,33 @@
                                                                         <input type="checkbox" class="checkbox_setting_public" id="pub_checkbox_<?php echo $i; ?>" name="file[<?php echo $i; ?>][public]" value="1" <?php if ($file->public) { ?>checked="checked"<?php } ?>/> <?php _e('Allow public downloading of this file.', 'cftp_admin');?>
                                                                     </label>
                                                                 </div>
+
+                                                                <div class="form-group">
+                                                                    <div class="divider"></div>
+                                                                    <h3><?php _e('Custom download aliases', 'cftp_admin');?></h3>
+                                                                    <?php foreach ($file->getCustomDownloads() as $j => $custom_download) {
+                                                                        $trans = __('Enter a custom download link.', 'cftp_admin');
+                                                                        $custom_download_uri = get_option('custom_download_uri');
+                                                                        if (!$custom_download_uri) $custom_download_uri = BASE_URI . 'custom-download.php?link=';
+                                                                        echo <<<EOL
+                                                                            <div class="input-group">
+                                                                                <input type="hidden" value="{$custom_download['link']}" name="file[$i][custom_downloads][$j][id]" />
+                                                                                <input type="text" name="file[$i][custom_downloads][$j][link]"
+                                                                                    id="custom_download_input_$j"
+                                                                                    value="{$custom_download['link']}"
+                                                                                    class="form-control"
+                                                                                    placeholder="$trans" />
+                                                                                <a href="#" class="input-group-text" onclick="copyTextToClipboard('$custom_download_uri' + document.getElementById('custom_download_input_$j').value);">
+                                                                                    <i class="fa fa-copy" style="cursor: pointer"></i>
+                                                                                </a>
+                                                                            </div>
+EOL;
+                                                                    }
+                                                                    ?>
+                                                                    <p class="field_note form-text">
+                                                                        <?php echo sprintf(__('Optional: enter an alias to use on the custom download link. Ej: "my-first-file" will let you download this file from %s'), BASE_URI.'custom-download.php?link=my-first-file'); ?>
+                                                                    </p>
+                                                                </div>
                                                         <?php
                                                             }
                                                         ?>
@@ -151,26 +178,64 @@
                                                 </div>
                                         <?php
                                             }
-
-                                            if (CURRENT_USER_LEVEL != 0) {
-                                                $generate_categories_options = generate_categories_options( $get_categories['arranged'], 0, $file->categories);
                                         ?>
-                                                <div class="col categories">
-                                                    <div class="file_data">
-                                                        <h3><?php _e('Categories', 'cftp_admin');?></h3>
-                                                        <label><?php _e('Add to', 'cftp_admin');?>:</label>
-                                                        <select class="form-select select2 none" multiple="multiple" id="categories_<?php echo $file->id; ?>" name="file[<?php echo $i; ?>][categories][]" data-type="categories" data-placeholder="<?php _e('Select one or more options. Type to search.', 'cftp_admin');?>">
-                                                            <?php echo render_categories_options($generate_categories_options, ['selected' => $file->categories, 'ignore' => $ignore]); ?>
-                                                        </select>
-                                                        <div class="select_control_buttons">
-                                                            <button type="button" class="btn btn-sm btn-primary add-all" data-target="categories_<?php echo $file->id; ?>"><?php _e('Add all','cftp_admin'); ?></button>
-                                                            <button type="button" class="btn btn-sm btn-primary remove-all" data-target="categories_<?php echo $file->id; ?>"><?php _e('Remove all','cftp_admin'); ?></button>
+                                        <div class="col">
+                                            <?php
+                                                if (CURRENT_USER_LEVEL != 0) {
+                                                    $generate_categories_options = generate_categories_options( $get_categories['arranged'], 0, $file->categories);
+                                            ?>
+                                                    <div class="categories">
+                                                        <div class="file_data">
+                                                            <h3><?php _e('Categories', 'cftp_admin');?></h3>
+                                                            <label><?php _e('Add to', 'cftp_admin');?>:</label>
+                                                            <select class="form-select select2 none" multiple="multiple" id="categories_<?php echo $file->id; ?>" name="file[<?php echo $i; ?>][categories][]" data-type="categories" data-placeholder="<?php _e('Select one or more options. Type to search.', 'cftp_admin');?>">
+                                                                <?php echo render_categories_options($generate_categories_options, ['selected' => $file->categories, 'ignore' => $ignore]); ?>
+                                                            </select>
+                                                            <div class="select_control_buttons">
+                                                                <button type="button" class="btn btn-sm btn-primary add-all" data-target="categories_<?php echo $file->id; ?>"><?php _e('Add all','cftp_admin'); ?></button>
+                                                                <button type="button" class="btn btn-sm btn-primary remove-all" data-target="categories_<?php echo $file->id; ?>"><?php _e('Remove all','cftp_admin'); ?></button>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                        <?php
-                                            }
-                                        ?>
+                                            <?php
+                                                }
+                                            ?>
+
+                                            <div class="folders">
+                                                <h3><?php _e('Location', 'cftp_admin');?></h3>
+                                                <label><?php _e('Store in this folder', 'cftp_admin');?>:</label>
+                                                <?php
+                                                    $ignore = [];
+                                                    if (CURRENT_USER_LEVEL == 0) {
+                                                        $see_public_folders = get_option('clients_files_list_include_public');
+                                                        $statement = $dbh->prepare("SELECT * FROM " . TABLE_FOLDERS);
+                                                        $statement->execute();
+                                                        if ($statement->rowCount() > 0) {
+                                                            $statement->setFetchMode(PDO::FETCH_ASSOC);
+                                                            while ($folder_row = $statement->fetch()) {
+                                                                if ($folder_row['user_id'] == CURRENT_USER_ID) {
+                                                                    continue;
+                                                                }
+                                                                if ($see_public_folders == '1' && $folder_row['public'] != 1) {
+                                                                    $ignore[] = $folder_row['id'];
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    $folders = new \ProjectSend\Classes\Folders;
+                                                    $folders_arranged = $folders->getAllArranged();
+
+                                                    if (CURRENT_USER_LEVEL == 0 && get_option('clients_files_list_include_public')) {
+                                                        $folders_arguments['public_or_client'] = true;
+                                                    }
+                                                ?>
+                                                <select class="form-select select2 none" id="folder_<?php echo $file->id; ?>" name="file[<?php echo $i; ?>][folder_id]" data-type="folder" data-placeholder="<?php _e('Optional. Type to search.', 'cftp_admin');?>">
+                                                    <option value=""><?php _e('Root','cftp_admin'); ?></option>
+                                                    <?php echo $folders->renderSelectOptions($folders_arranged, ['selected' => $file->folder_id, 'ignore' => $ignore]); ?>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <?php
@@ -236,6 +301,16 @@
                                                     'data' => [
                                                         'type' => 'categories',
                                                         'target' => 'categories_'.$file->id,
+                                                    ],
+                                                ];
+
+                                                // Folders
+                                                $copy_buttons['folder'] = [
+                                                    'label' => __('Selected folder','cftp_admin'),
+                                                    'class' => 'copy-all',
+                                                    'data' => [
+                                                        'type' => 'folder',
+                                                        'target' => 'folder_'.$file->id,
                                                     ],
                                                 ];
                                             }

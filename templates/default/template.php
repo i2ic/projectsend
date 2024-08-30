@@ -1,9 +1,9 @@
 <?php
 /*
 Template name: Default
-URI: http://www.projectsend.org/templates/default
+URI: https://www.projectsend.org/templates/default
 Author: ProjectSend
-Author URI: http://www.projectsend.org/
+Author URI: https://www.projectsend.org/
 Author e-mail: contact@projectsend.org
 Description: The default template uses the same style as the system backend, allowing for a seamless user experience
 */
@@ -14,6 +14,8 @@ define('TEMPLATE_THUMBNAILS_WIDTH', '50');
 define('TEMPLATE_THUMBNAILS_HEIGHT', '50');
 
 $filter_by_category = isset($_GET['category']) ? $_GET['category'] : null;
+
+$current_url = get_form_action_with_existing_parameters('index.php');
 
 include_once ROOT_DIR . '/templates/common.php'; // include the required functions for every template
 
@@ -55,12 +57,14 @@ $filters_form = [
     'action' => '',
     'items' => [],
 ];
+
 if (!empty($cat_ids)) {
     $selected_parent = (isset($_GET['category'])) ? [$_GET['category']] : [];
     $category_filter = [];
-    $generate_categories_options = generate_categories_options($get_categories['categories'], 0, $selected_parent, 'include', $cat_ids);
-    foreach ($generate_categories_options as $category_id => $category) {
-        $category_filter[$category_id] = $category['name'];
+    $generate_categories_options = generate_categories_options($get_categories['arranged'], 0, $selected_parent, 'include', $cat_ids);
+    $format_categories_options = format_categories_options($generate_categories_options);
+    foreach ($format_categories_options as $key => $category) {
+        $category_filter[$category['id']] = $category['label'];
     }
     $filters_form['items']['category'] = [
         'current' => (isset($_GET['category'])) ? $_GET['category'] : null,
@@ -83,6 +87,11 @@ $bulk_actions_items = [
 include_once ADMIN_VIEWS_DIR . DS . 'header.php';
 
 include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
+
+include_once LAYOUT_DIR . DS . 'breadcrumbs.php';
+
+include_once LAYOUT_DIR . DS . 'folders-nav.php';
+
 ?>
 <form action="" name="files_list" method="get" class="form-inline batch_actions">
     <div class="row">
@@ -95,6 +104,7 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                 $table = new \ProjectSend\Classes\Layout\Table([
                     'id' => 'files_list',
                     'class' => 'footable table',
+                    'origin' => CLIENT_VIEW_FILE_LIST_URL_PATH,
                 ]);
 
                 $thead_columns = array(
@@ -133,7 +143,7 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                         'content' => __('Date', 'cftp_admin'),
                     ),
                     array(
-                        'content' => __('Expiration date', 'cftp_admin'),
+                        'content' => __('Expiry', 'cftp_admin'),
                         'hide' => 'phone',
                     ),
                     array(

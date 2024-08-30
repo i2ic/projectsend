@@ -615,8 +615,25 @@ function client_can_upload_public($client_id)
     return false;
 }
 
+function client_can_assign_to_public_folder($client_id)
+{
+    if (!client_can_upload_public($client_id)) {
+        return false;
+    }
+
+    if (get_option('clients_can_upload_to_public_folders') == '1') {
+        return true;
+    }
+
+    return false;
+}
+
 function current_user_can_upload()
 {
+    if (!defined('CURRENT_USER_LEVEL')) {
+        return false;
+    }
+
     switch (CURRENT_USER_LEVEL) {
         case 9:
         case 8:
@@ -777,7 +794,7 @@ function render_footer_text()
     <footer>
         <div id="footer">
             <?php
-   /**         if (is_projectsend_installed() && get_option('footer_custom_enable') == '1') {
+            if (is_projectsend_installed() && get_option('footer_custom_enable') == '1') {
                 echo strip_tags(get_option('footer_custom_content'), '<br><span><a><strong><em><b><i><u><s>');
             } else {
                 // $link = '<a href="'.SYSTEM_URI.'" target="_blank">'.SYSTEM_NAME.'</a>';
@@ -785,18 +802,9 @@ function render_footer_text()
                 _e('Provided by', 'cftp_admin'); ?> <a href="<?php echo SYSTEM_URI; ?>" target="_blank"><?php echo SYSTEM_NAME; ?></a> <?php if (user_is_logged_in() == true) {
                     _e('version', 'cftp_admin');
                     echo ' ' . CURRENT_VERSION;
-                } ?> - <?php _e('Free software', 'cftp_admin');
-	    } **/
-
-            if ( defined('FOOTER_CUSTOM_ENABLE') && FOOTER_CUSTOM_ENABLE == '1' ) {
-                                        echo strip_tags(FOOTER_CUSTOM_CONTENT, '<br><span><a><strong><em><b><i><u><s>');
-                                }
-                                else {
-                                        _e('Provided by', 'cftp_admin'); ?> <a href="<?php echo "https://i2ic.com"; ?>" target="_blank"><?php echo "i2i Media"; ?></a> version 1.0.0 <?php if ($logged == true) { _e('version', 'cftp_admin'); echo ' ' . CURRENT_VERSION; } ?> - <?php _e('<a href="mailto:info@i2ic.com">Contact Us</a>', 'cftp_admin');
-                                }
-                        ?>
-
-
+                } ?>  <?php //_e('Free software', 'cftp_admin');
+            }
+            ?>
         </div>
     </footer>
 <?php
@@ -972,7 +980,8 @@ function vax($array)
  */
 function html_output($str, $flags = ENT_QUOTES, $encoding = CHARSET, $double_encode = false)
 {
-    return htmlentities($str, $flags, $encoding, $double_encode);
+    if ($str == null) { return; }
+    return htmlentities($str ?? '', $flags, $encoding, $double_encode);
 }
 
 /**
@@ -981,6 +990,7 @@ function html_output($str, $flags = ENT_QUOTES, $encoding = CHARSET, $double_enc
  */
 function htmlentities_allowed($str, $quoteStyle = ENT_COMPAT, $charset = CHARSET, $doubleEncode = false)
 {
+    if ($str == null) { return $str; }
     //$description = htmlspecialchars($str, $quoteStyle, $charset, $doubleEncode);
     $string = htmlspecialchars_decode($str, $quoteStyle);
     return strip_tags($string, '<i><b><strong><em><p><br><ul><ol><li><u><sup><sub><s>');
@@ -1007,7 +1017,9 @@ function htmlentities_allowed($str, $quoteStyle = ENT_COMPAT, $charset = CHARSET
 // Remove script and style tags
 function htmlentities_allowed_code_editor($html, $quoteStyle = ENT_COMPAT, $charset = CHARSET, $doubleEncode = false)
 {
-    $html = htmlspecialchars_decode($html, $quoteStyle);
+    if (!empty($html)) {
+        $html = htmlspecialchars_decode($html, $quoteStyle);
+    }
     // $html = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $html);
     // $html = preg_replace('#<style(.*?)>(.*?)</style>#is', '', $html);
 
@@ -1219,12 +1231,7 @@ function make_excerpt($string, $length, $break = "...")
  */
 function generate_random_string($length = 10)
 {
-    $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    $rnd_result = '';
-    for ($i = 0; $i < $length; $i++) {
-        $rnd_result .= $characters[rand(0, strlen($characters) - 1)];
-    }
-    return $rnd_result;
+    return substr(bin2hex(random_bytes($length)), 0, $length);
 }
 
 function get_file_type_by_mime($full_path)
@@ -1241,7 +1248,7 @@ function get_file_type_by_mime($full_path)
 function file_is_image($full_path)
 {
     $mimeType = get_file_type_by_mime($full_path);
-    if (explode('/', $mimeType)[0] == 'image') {
+    if ($mimeType != null && explode('/', $mimeType)[0] == 'image') {
         return true;
     }
 
@@ -1274,14 +1281,28 @@ function file_is_audio($full_path)
 function file_is_svg($file)
 {
     if (file_exists($file)) {
-        $svg_sanitizer = new Sanitizer();
-        $source_file = file_get_contents($file);
-        $sanitized_file = $svg_sanitizer->sanitize($source_file);
+        // Check by mime type
+            if (in_array(mime_content_type($file), [
+                'image/svg+xml',
+                'image/svg',
+            ])) {
+                return true;
+            }
     } else {
         return false;
     }
+}
 
-    return $sanitized_file;
+function sanitize_svg($file)
+{
+    try {
+        $svg_sanitizer = new Sanitizer();
+        $source_file = file_get_contents($file);
+        $sanitized_file = $svg_sanitizer->sanitize($source_file);
+        return $sanitized_file;
+    } catch (\Exception $e) {
+        return null;
+    }
 }
 
 /**
@@ -1407,10 +1428,12 @@ function get_branding_layout($return_thumbnail = false)
         $branding_image = ASSETS_IMG_URL . DEFAULT_LOGO_FILENAME;
     }
 
+    $replace = '<img src="' . $branding_image . '" alt="' . html_output(get_option('this_install_title')) . '" />';
+
     if ($branding['type'] == 'raster') {
         $replace = '<img src="' . $branding_image . '" alt="' . html_output(get_option('this_install_title')) . '" />';
     } elseif ($branding['type'] == 'vector') {
-        $replace = file_is_svg($branding['dir']);
+        $replace = sanitize_svg($branding['dir']);
     }
 
     $layout = str_replace('%LOGO%', $replace, $layout);
@@ -1611,16 +1634,16 @@ function generate_safe_filename($filename)
 /**
  * Simple file upload. Used on normal file fields, eg: logo on branding page
  */
-function option_file_upload($file, $validate_ext = '', $option = '', $action = '')
+function option_file_upload($file, $validate_type = '', $option = '', $action = '')
 {
     global $dbh;
     $continue = true;
 
     /** Validate file extensions */
-    if (!empty($validate_ext)) {
-        switch ($validate_ext) {
+    if (!empty($validate_type)) {
+        switch ($validate_type) {
             case 'image':
-                $validate_types = "/^\.(jpg|jpeg|gif|png){1}$/i";
+                $validate_types = "/^\.(jpg|jpeg|gif|png|svg){1}$/i";
                 break;
             default:
                 break;
@@ -1634,6 +1657,10 @@ function option_file_upload($file, $validate_ext = '', $option = '', $action = '
          */
         if (!empty($validate_types) && !preg_match($validate_types, strrchr($safe_filename, '.'))) {
             $continue = false;
+        }
+        
+        if (file_is_svg($file['tmp_name'])) {
+            file_put_contents($file['tmp_name'], sanitize_svg($file['tmp_name']));
         }
 
         if ($continue) {
@@ -1875,6 +1902,15 @@ function record_new_download($user_id = CURRENT_USER_ID, $file_id = null)
         $statement->bindValue(':anonymous', 1, PDO::PARAM_INT);
         $statement->execute();
     } else {
+        // Do not log if option is enabled and downloader is the original author
+        if (get_option('download_logging_ignore_file_author') == '1') {
+            $file = new \ProjectSend\Classes\Files($file_id);
+            if ($file->user_id == $user_id) {
+                return;
+            }
+        }
+
+        // Record the download
         $statement = $dbh->prepare("INSERT INTO " . TABLE_DOWNLOADS . " (user_id , file_id, remote_ip, remote_host) VALUES (:user_id, :file_id, :remote_ip, :remote_host)");
         $statement->bindValue(':user_id', $user_id, PDO::PARAM_INT);
         $statement->bindParam(':file_id', $file_id, PDO::PARAM_INT);
@@ -1999,23 +2035,29 @@ function count_account_requests_denied()
 // Function to get the client ip address
 function get_client_ip()
 {
-    $ipaddress = '';
-    if (!empty($_SERVER['HTTP_CLIENT_IP']))
-        $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-    else if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
-        $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-    else if (!empty($_SERVER['HTTP_X_FORWARDED']))
-        $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-    else if (!empty($_SERVER['HTTP_FORWARDED_FOR']))
-        $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-    else if (!empty($_SERVER['HTTP_FORWARDED']))
-        $ipaddress = $_SERVER['HTTP_FORWARDED'];
-    else if (!empty($_SERVER['REMOTE_ADDR']))
-        $ipaddress = $_SERVER['REMOTE_ADDR'];
-    else
-        $ipaddress = 'UNKNOWN';
+    // The 'null' value should pass validators
+    $ip = '0.0.0.0';
 
-    return $ipaddress;
+    // Expanded for readability
+    $ipHeaders = array(
+        'HTTP_X_REAL_IP',
+        'X-Forwarded-For',
+        'HTTP_X_FORWARDED_FOR',
+        'HTTP_CLIENT_IP',
+        'HTTP_VIA',
+        'CF-Connecting-IP',
+        'REMOTE_ADDR',
+    );
+    
+    // A bit more concise 
+    foreach($ipHeaders as $header) {
+        if (empty($_SERVER[$header])) continue;
+        $ip = $_SERVER[$header];
+        break;
+    }
+    
+    // Simplified single IP filtering
+    return explode(',', $ip)[0];
 }
 
 function convert_seconds($seconds)
@@ -2114,6 +2156,12 @@ function ps_redirect($location, $status = 303)
     exit;
 }
 
+function die_with_error_code($code = 403)
+{
+    http_response_code( $code );
+    exit;
+}
+
 function exit_with_error_code($code = 403)
 {
     switch ($code) {
@@ -2170,4 +2218,45 @@ function mask_email($email)
     $mail_parts[1] = implode('.', $domain_parts);
 
     return implode("@", $mail_parts);
+}
+
+function modify_url_with_parameters($url, $parameters_add = [], $parameters_remove = [])
+{
+    $base_url = strtok($url, '?');
+    $parsed = parse_url($url);
+    if (empty($parsed['query'])) {
+        $query = '';
+    } else {
+        $query = $parsed['query'];
+    }
+    parse_str($query, $params);
+    if (!empty($parameters_remove)) {
+        foreach ($parameters_remove as $parameter) {
+            unset($params[$parameter]);
+        }
+    }
+    if (!empty($parameters_add)) {
+        foreach ($parameters_add as $parameter => $value) {
+            $params[$parameter] = $value;
+        }
+    }
+
+    return (!empty($params)) ? $base_url.'?'.http_build_query($params) : $base_url;
+}
+
+function make_return_to_url($from = null, $encode = false)
+{
+    $return_to = BASE_URI;
+    if (!empty($from)) {
+        $from = basename($_SERVER['REQUEST_URI']);
+        if (strpos($from, '.php') !== false) {
+            $return_to .= $from;
+        }
+    }
+
+    if ($encode) {
+        return urlencode($return_to);
+    }
+
+    return $return_to;
 }

@@ -6,6 +6,7 @@
  */
 $allowed_levels = array(9, 8, 7, 0);
 require_once 'bootstrap.php';
+log_in_required($allowed_levels);
 
 $active_nav = 'files';
 
@@ -175,6 +176,34 @@ if (isset($_POST['action'])) {
 // Global form action
 $query_table_files = true;
 
+// Folders
+$current_folder = (isset($_GET['folder_id'])) ? (int)$_GET['folder_id'] : null;
+$folders_arguments = [
+    'parent' => $current_folder
+];
+if (!empty($_GET['search'])) {
+    $folders_arguments['search'] = $_GET['search'];
+}
+if (defined('CURRENT_USER_LEVEL') && CURRENT_USER_LEVEL == 0) {
+    if (client_can_upload_public(CURRENT_USER_ID)) {
+        $folders_arguments['public_or_client'] = true;
+        $folders_arguments['client_id'] = CURRENT_USER_ID;
+    } else {
+        $folders_arguments['user_id'] = CURRENT_USER_ID;
+    }
+}
+// @todo DECIDE WHICH FOLDERS TO GET IF VIEWING FILES BY CLIENT, GROUP OR CATEGORY
+// if ($filter_by_client) {
+//     $folders_arguments['client'] = $_GET['client_id'];
+// }
+// if ($filter_by_group) {
+//     $folders_arguments['group'] = $_GET['group_id'];
+// }
+
+$folders_obj = new \ProjectSend\Classes\Folders;
+$folders = $folders_obj->getFolders($folders_arguments);
+
+// Get files
 if (isset($search_on)) {
     $params = [];
     $rq = "SELECT * FROM " . TABLE_FILES_RELATIONS . " WHERE $search_on = :id";
@@ -246,6 +275,14 @@ if ($query_table_files === true) {
         $params[':uploader'] = $_GET['uploader'];
     }
 
+    // Filter by folders
+    if (!empty($current_folder)) {
+        $conditions[] = "folder_id = :folder_id";
+        $params[':folder_id'] = $current_folder;
+    } else {
+        $conditions[] = "folder_id IS NULL";
+    }
+
     // Filter by assignations
     if (isset($_GET['assigned']) && !empty($_GET['assigned'])) {
         if (array_key_exists($_GET['assigned'], $filter_options_assigned)) {
@@ -269,7 +306,7 @@ if ($query_table_files === true) {
      * If the user is an uploader, or a client is editing their files
      * only show files uploaded by that account.
      */
-    if (CURRENT_USER_LEVEL == '7' || CURRENT_USER_LEVEL == '0') {
+    if (defined('CURRENT_USER_LEVEL') && in_array(CURRENT_USER_LEVEL, [0, 7])) {
         $conditions[] = "uploader = :uploader";
         $no_results_error = 'account_level';
 
@@ -354,6 +391,19 @@ if (!$count) {
 if (current_user_can_upload()) {
     $header_action_buttons = [
         [
+            'url' => '#',
+            'label' => __('New folder', 'cftp_admin'),
+            'id' => 'btn_header_folder_create',
+            'data-attributes' => [
+                'modal-title' => __('New folder', 'cftp_admin'),
+                'modal-label' => __('Name', 'cftp_admin'),
+                'modal-title-invalid' => __('Name is not valid', 'cftp_admin'),
+                'parent' => $current_folder,
+                'process-url' => AJAX_PROCESS_URL.'?do=folder_create',
+                'folder-url' => BASE_URI.'manage-files.php?folder_id={folder_id}',
+            ],
+        ],
+        [
             'url' => 'upload.php',
             'label' => __('Upload files', 'cftp_admin'),
         ],
@@ -362,7 +412,7 @@ if (current_user_can_upload()) {
 
 // Search + filters bar data
 $search_form_action = 'manage-files.php';
-if (CURRENT_USER_LEVEL != '0') {
+if (defined('CURRENT_USER_LEVEL') && CURRENT_USER_LEVEL != '0') {
     $filters_form = [
         'action' => $current_url,
         'ignore_form_parameters' => ['hidden', 'action', 'uploader', 'assigned'],
@@ -395,32 +445,37 @@ if (CURRENT_USER_LEVEL != '0') {
 }
 
 // Results count and form actions 
-$elements_found_count = $count_for_pagination;
+$elements_found_count = $count_for_pagination;// + count($folders);
 $bulk_actions_items = [
     'none' => __('Select action', 'cftp_admin'),
     'edit' => __('Edit', 'cftp_admin'),
 ];
-if (CURRENT_USER_LEVEL != '0') {
+if (defined('CURRENT_USER_LEVEL') && CURRENT_USER_LEVEL != '0') {
     $bulk_actions_items['zip'] = __('Download zipped', 'cftp_admin');
     if (!isset($search_on)) {
         $bulk_actions_items['hide_everyone'] = __('Set to hidden from everyone already assigned', 'cftp_admin');
         $bulk_actions_items['show_everyone'] = __('Set to visible to everyone already assigned', 'cftp_admin');
     }
 }
-if (CURRENT_USER_LEVEL != '0' && isset($search_on)) {
-    $bulk_actions_items['hide'] = __('Set to hidden', 'cftp_admin');
-    $bulk_actions_items['show'] = __('Set to visible', 'cftp_admin');
-    $bulk_actions_items['unassign'] = __('Unassign', 'cftp_admin');
-} else {
-    if (CURRENT_USER_LEVEL != '0' || (CURRENT_USER_LEVEL == '0' && get_option('clients_can_delete_own_files') == '1'))
-        $bulk_actions_items['delete'] = __('Delete', 'cftp_admin');
+if (defined('CURRENT_USER_LEVEL')) {
+    if (CURRENT_USER_LEVEL != '0' && isset($search_on)) {
+        $bulk_actions_items['hide'] = __('Set to hidden', 'cftp_admin');
+        $bulk_actions_items['show'] = __('Set to visible', 'cftp_admin');
+        $bulk_actions_items['unassign'] = __('Unassign', 'cftp_admin');
+    } else {
+        if (CURRENT_USER_LEVEL != '0' || (CURRENT_USER_LEVEL == '0' && get_option('clients_can_delete_own_files') == '1'))
+            $bulk_actions_items['delete'] = __('Delete', 'cftp_admin');
+    }
 }
-
 
 // Include layout files
 include_once ADMIN_VIEWS_DIR . DS . 'header.php';
 
 include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
+
+include_once LAYOUT_DIR . DS . 'breadcrumbs.php';
+
+include_once LAYOUT_DIR . DS . 'folders-nav.php';
 ?>
 
 <form action="<?php echo $current_url; ?>" name="files_list" method="post" class="batch_actions">
@@ -440,6 +495,7 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                     $table = new \ProjectSend\Classes\Layout\Table([
                         'id' => 'files_tbl',
                         'class' => 'footable table',
+                        'origin' => basename(__FILE__),
                     ]);
 
                     /**
@@ -451,6 +507,7 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                         'select_all' => true,
                         'is_not_client' => (CURRENT_USER_LEVEL != '0') ? true : false,
                         'can_set_public' => (CURRENT_USER_LEVEL != '0' || current_user_can_upload_public()) ? true : false,
+                        'can_set_expiration' => (CURRENT_USER_LEVEL != '0' || get_option('clients_can_set_expiration_date') == '1') ? true : false,
                         'total_downloads' => (CURRENT_USER_LEVEL != '0' && !isset($search_on)) ? true : false,
                         'is_search_on' => (isset($search_on)) ? true : false,
                     );
@@ -464,6 +521,11 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                             'condition' => $conditions['select_all'],
                         ),
                         array(
+                            'sortable' => true,
+                            'sort_url' => 'filename',
+                            'content' => __('Title', 'cftp_admin'),
+                        ),
+                        array(
                             'content' => __('Preview', 'cftp_admin'),
                             'hide' => 'phone,tablet',
                         ),
@@ -475,13 +537,8 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                             'hide' => 'phone',
                         ),
                         array(
-                            'content' => __('Type', 'cftp_admin'),
+                            'content' => __('Ext.', 'cftp_admin'),
                             'hide' => 'phone,tablet',
-                        ),
-                        array(
-                            'sortable' => true,
-                            'sort_url' => 'filename',
-                            'content' => __('Title', 'cftp_admin'),
                         ),
                         array(
                             'sortable' => true,
@@ -511,7 +568,15 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                             'condition' => $conditions['can_set_public'],
                         ),
                         array(
+                            'sortable' => true,
+                            'sort_url' => 'expires',
                             'content' => __('Expiry', 'cftp_admin'),
+                            'hide' => 'phone',
+                            'condition' => $conditions['can_set_expiration'],
+                        ),
+                        array(
+                            'sortable' => false,
+                            'content' => __('Categories', 'cftp_admin'),
                             'hide' => 'phone',
                             'condition' => $conditions['is_not_client'],
                         ),
@@ -542,9 +607,19 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
 
                     $table->thead($thead_columns);
 
+                    // Files
                     $sql->setFetchMode(PDO::FETCH_ASSOC);
                     while ($row = $sql->fetch()) {
-                        $table->addRow();
+                        $table->addRow([
+                            'class' => 'file_draggable',
+                            'attributes' => [
+                                'draggable' => 'true',
+                            ],
+                            'data-attributes' => [
+                                'draggable-type' => 'file',
+                                'file-id' => $row['id'],
+                            ],
+                        ]);
                         $file = new \ProjectSend\Classes\Files($row['id']);
 
                         // Visibility is only available when filtering by client or group.
@@ -576,7 +651,7 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                             $thumbnail = make_thumbnail($file->full_path, null, 50, 50);
                             if (!empty($thumbnail['thumbnail']['url'])) {
                                 $preview_cell = '<a href="#" class="get-preview" data-url="' . BASE_URI . 'process.php?do=get_preview&file_id=' . $file->id . '">
-                                            <img src="' . $thumbnail['thumbnail']['url'] . '" class="thumbnail" />
+                                            <img alt="" src="' . $thumbnail['thumbnail']['url'] . '" class="thumbnail" />
                                         </a>';
                             }
                         }
@@ -597,7 +672,7 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                         }
 
                         // Expiration
-                        if ($file->expires == '0') {
+                        if ($file->expires == '0' || !$file->expires) {
                             $expires_button = 'success';
                             $expires_label = __('Does not expire', 'cftp_admin');
                         } else {
@@ -635,6 +710,26 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                             }
                         }
 
+                        // Categories
+                        $categories = [];
+                        $categories_list = '';
+                        $statement = $dbh->prepare("SELECT c.name as category_name, c.id as category_id, r.id as rel_id FROM ". TABLE_CATEGORIES_RELATIONS." r INNER JOIN " . TABLE_CATEGORIES . " c on r.cat_id = c.id WHERE file_id = :file_id");
+                        $statement->bindParam(':file_id', $file->id, PDO::PARAM_INT);
+                        $statement->execute();
+                        if ($statement->rowCount() > 0) {
+                            $statement->setFetchMode(PDO::FETCH_ASSOC);
+                            while ($crow = $statement->fetch()) {
+                                $categories[] = $crow['category_name'];
+                            }
+                        }
+                        if (!empty($categories)) {
+                            $categories_list = '<ul class="ms-3 p-0">';
+                            foreach ($categories as $category) {
+                                $categories_list .= '<li>'.$category.'</li>';
+                            }
+                            $categories_list .= '</ul>';
+                        }
+
                         // Download count and link on the unfiltered files table no specific client or group selected)
                         if (!isset($search_on)) {
                             if (CURRENT_USER_LEVEL != '0') {
@@ -667,6 +762,12 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                                 'condition' => $conditions['select_all'],
                             ),
                             array(
+                                'attributes' => array(
+                                    'class' => array('file_name'),
+                                ),
+                                'content' => $title_content,
+                            ),
+                            array(
                                 'content' => $preview_cell,
                             ),
                             array(
@@ -674,12 +775,6 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                             ),
                             array(
                                 'content' => $file->extension,
-                            ),
-                            array(
-                                'attributes' => array(
-                                    'class' => array('file_name'),
-                                ),
-                                'content' => $title_content,
                             ),
                             array(
                                 'content' => $file->description,
@@ -704,6 +799,10 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                             ),
                             array(
                                 'content' => '<a href="javascript:void(0);" class="btn btn-' . $expires_button . ' disabled btn-sm" rel="" title="">' . $expires_label . '</a>',
+                                'condition' => $conditions['can_set_expiration'],
+                            ),
+                            array(
+                                'content' => $categories_list,
                                 'condition' => $conditions['is_not_client'],
                             ),
                             array(

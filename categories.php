@@ -5,6 +5,7 @@
  */
 $allowed_levels = array(9, 8, 7);
 require_once 'bootstrap.php';
+log_in_required($allowed_levels);
 
 $active_nav = 'files';
 
@@ -163,6 +164,7 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                         $table = new \ProjectSend\Classes\Layout\Table([
                             'id' => 'categories_tbl',
                             'class' => 'footable table',
+                            'origin' => basename(__FILE__),
                         ]);
 
                         $thead_columns = array(

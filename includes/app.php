@@ -53,7 +53,7 @@ define('TRANSLATIONS_URL', 'https://www.projectsend.org/translations/');
  * Current version.
  * Updated only when releasing a new downloadable complete version.
  */
-define('CURRENT_VERSION', 'r1605');
+define('CURRENT_VERSION', 'r1720');
 
 /**
  * Required software versions
@@ -144,6 +144,8 @@ define('TABLE_GROUPS', TABLES_PREFIX . 'groups');
 define('TABLE_MEMBERS', TABLES_PREFIX . 'members');
 define('TABLE_MEMBERS_REQUESTS', TABLES_PREFIX . 'members_requests');
 define('TABLE_FOLDERS', TABLES_PREFIX . 'folders');
+define('TABLE_FOLDERS_FILES', TABLES_PREFIX . 'folders_files');
+define('TABLE_FOLDERS_RELATIONS', TABLES_PREFIX . 'folders_relations');
 define('TABLE_CATEGORIES', TABLES_PREFIX . 'categories');
 define('TABLE_CATEGORIES_RELATIONS', TABLES_PREFIX . 'categories_relations');
 define('TABLE_LOG', TABLES_PREFIX . 'actions_log');
@@ -151,6 +153,7 @@ define('TABLE_PASSWORD_RESET', TABLES_PREFIX . 'password_reset');
 define('TABLE_LOGINS_FAILED', TABLES_PREFIX . 'logins_failed');
 define('TABLE_CRON_LOG', TABLES_PREFIX . 'cron_log');
 define('TABLE_CUSTOM_ASSETS', TABLES_PREFIX . 'custom_assets');
+define('TABLE_CUSTOM_DOWNLOADS', TABLES_PREFIX . 'custom_downloads');
 define('TABLE_USER_LIMIT_UPLOAD_TO', TABLES_PREFIX . 'user_limit_upload_to');
 define('TABLE_AUTHENTICATION_CODES', TABLES_PREFIX . 'authentication_codes');
 
