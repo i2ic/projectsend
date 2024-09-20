@@ -945,6 +945,13 @@ class Files
             WHERE id = :id
         ");
 
+// Steven Patch - Issue with non admin users publishing changes - updated to allow 20 years expire
+if ($this->expires === null) {
+
+        $this->expires = time() + (20 * 365 * 24 * 60 * 60); // 20 years in seconds
+}
+// End of patch
+		
         $statement->bindParam(':title', $this->name);
         $statement->bindParam(':description', $this->description);
         $statement->bindParam(':expires', $this->expires, PDO::PARAM_INT);
